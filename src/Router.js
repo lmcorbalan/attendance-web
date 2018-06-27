@@ -6,6 +6,7 @@ import type { Match } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 
 import PlayersList from './components/Player/List';
+import PlayersAttendace from './components/Player/Attendace';
 
 const FourOhFour = () => <h1>404</h1>;
 
@@ -54,6 +55,7 @@ const Router = props => {
         <div className={classes.contentHeader} />
         <Switch>
           <Route exact path="/" component={PlayersList} />
+          <Route exact path="/attendace" component={PlayersAttendace} />
           <Route component={FourOhFour} />
         </Switch>
       </main>
