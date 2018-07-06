@@ -10,7 +10,8 @@ import Paper from '@material-ui/core/Paper';
 import Avatar from '@material-ui/core/Avatar';
 import Switch from '@material-ui/core/Switch';
 
-import players from '../players';
+import { Query, Mutation } from 'react-apollo';
+import gql from 'graphql-tag';
 
 const styles = theme => ({
   root: {
@@ -18,85 +19,168 @@ const styles = theme => ({
     marginTop: theme.spacing.unit * 3,
     overflowX: 'auto'
   },
-  table: {
-  },
+  table: {},
   avatar: {
     margin: 10
   }
 });
 
-const attendanceOptions = ['SI', 'NO', 'DIF', 'SAF'];
+const GET_ALL_PLAYERS = gql`
+  query getAllPlayers {
+    ATTENDANCE_TYPES: __type(name: "AttendanceType") {
+      enumValues {
+        name
+      }
+    }
+    players: allPlayers {
+      id
+      name
+      lastname
+      birthDate
+      positions
+      phoneNumber
+      email
+      photo
+      attendances {
+        id
+        type
+        session {
+          id
+        }
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`;
 
-class PlayersAttendace extends Component {
-  state = {
-    players: players
-  };
+const UPDATE_ATTENDACE = gql`
+  mutation updateAttendace($playerId: ID!, $input: UpdatedAttendance!) {
+    updateAttendace(playerId: $playerId, input: $input) {
+      id
+      attendances {
+        id
+        type
+        session {
+          id
+        }
+      }
+    }
+  }
+`;
 
-  handleChange = (playerId, sessionId, selectedOption) => event => {
-    const players = this.state.players;
-    const newAttendace = attendanceOptions.reduce((acc, option) => {
-      acc[option] = option === selectedOption ? event.target.checked : false;
-
-      return acc;
+class PlayersAttendance extends Component {
+  getAttendanceStateByType(ATTENDANCE_TYPES, initialType = '') {
+    return ATTENDANCE_TYPES.enumValues.reduce((acc, type) => {
+      return {
+        ...acc,
+        [type.name]: type.name === initialType
+      };
     }, {});
-
-    players[playerId].attendace[sessionId] = newAttendace;
-    this.setState({players: players});
-  };
+  }
 
   render() {
-    const { classes } = this.props;
+    const { classes, sessionId } = this.props;
 
     return (
-      <Paper className={classes.root}>
-        <Table className={classes.table}>
-          <TableHead>
-            <TableRow>
-              <TableCell />
-              <TableCell>Jugador</TableCell>
-              {attendanceOptions.map(option => <TableCell key={`header-${option}`}>{option}</TableCell>)}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {this.state.players.map(player => {
-              return (
-                <TableRow key={player.id}>
-                  <TableCell>
-                    <Avatar
-                      alt={player.name}
-                      src={player.image}
-                      className={classes.avatar}
-                    />
-                  </TableCell>
-                  <TableCell>{player.name}</TableCell>
-                  {attendanceOptions.map(option => {
-                    const session = 1; // TODO: this will be the session id
-                    const checked = player.attendace[session][option];
-                    const cellKey = `${player.id}-${option}`;
-                    console.log(cellKey)
-                    return (
-                      <TableCell key={cellKey}>
-                        <Switch
-                          checked={checked}
-                          onChange={this.handleChange(player.id, session, option)}
-                          value={option}
-                          color="primary"
-                        />
+      <Query query={GET_ALL_PLAYERS}>
+        {({ loading, error, data }) => {
+          if (error) return <div>Error!!</div>;
+          if (loading || !data) return <div>...loading</div>;
+
+          const { ATTENDANCE_TYPES, players } = data;
+          const playersAttendance = players.reduce((acc, player) => {
+            // FIX - no attendance when it's a new session
+            const attendance = player.attendances.find(
+              attendace => attendace.session.id === sessionId
+            );
+            const type = attendance.type;
+
+            acc[player.id] = {
+              attendaceId: attendance.id,
+              ...this.getAttendanceStateByType(ATTENDANCE_TYPES, type)
+            };
+
+            return acc;
+          }, {});
+
+          return (
+            <Paper className={classes.root}>
+              <Table className={classes.table}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell />
+                    <TableCell>Jugador</TableCell>
+                    {ATTENDANCE_TYPES.enumValues.map(type => (
+                      <TableCell key={`header-${type.name}`}>
+                        {type.name}
                       </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {players.map(player => {
+                    return (
+                      <Mutation mutation={UPDATE_ATTENDACE} key={player.id}>
+                        {updateAttendace => {
+                          return (
+                            <TableRow>
+                              <TableCell>
+                                <Avatar
+                                  alt={player.name}
+                                  src={player.image}
+                                  className={classes.avatar}
+                                />
+                              </TableCell>
+                              <TableCell>{player.name}</TableCell>
+                              {ATTENDANCE_TYPES.enumValues.map(type => {
+                                const cellKey = `${player.id}-${type.name}`;
+
+                                return (
+                                  <TableCell key={cellKey}>
+                                    <Switch
+                                      checked={
+                                        playersAttendance[player.id][type.name]
+                                      }
+                                      onChange={event => {
+                                        event.preventDefault();
+                                        updateAttendace({
+                                          variables: {
+                                            playerId: player.id,
+                                            input: {
+                                              id:
+                                                playersAttendance[player.id]
+                                                  .attendaceId,
+                                              type: event.target.value
+                                            }
+                                          }
+                                        });
+                                      }}
+                                      value={type.name}
+                                      color="primary"
+                                    />
+                                  </TableCell>
+                                );
+                              })}
+                            </TableRow>
+                          );
+                        }}
+                      </Mutation>
                     );
                   })}
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </Paper>
+                </TableBody>
+              </Table>
+            </Paper>
+          );
+        }}
+      </Query>
     );
   }
 }
 
-PlayersAttendace.propTypes = {
-  classes: PropTypes.object.isRequired
+PlayersAttendance.propTypes = {
+  classes: PropTypes.object.isRequired,
+  sessionId: PropTypes.string.isRequired
 };
 
-export default withStyles(styles)(PlayersAttendace);
+export default withStyles(styles)(PlayersAttendance);
