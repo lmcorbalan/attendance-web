@@ -7,6 +7,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import PlayersList from './components/Player/List';
 import PlayersAttendaceRoute from './components/Player/Attendace/route';
+import SessionList from './components/Session/List';
 
 const FourOhFour = () => <h1>404</h1>;
 
@@ -43,22 +44,27 @@ const styles = theme => ({
 
 const Router = props => {
   const { classes, theme, open } = props;
+  console.log(props)
 
   return (
     <BrowserRouter>
-      <main
-        className={classNames(classes.content, classes['content-left'], {
-          [classes.contentShift]: open,
-          [classes['contentShift-left']]: open
-        })}
-      >
-        <div className={classes.contentHeader} />
-        <Switch>
-          <Route exact path="/" component={PlayersList} />
-          <Route exact path="/attendace/:sessionId" component={PlayersAttendaceRoute} />
-          <Route component={FourOhFour} />
-        </Switch>
-      </main>
+      <React.Fragment>
+        {props.children}
+        <main
+          className={classNames(classes.content, classes['content-left'], {
+            [classes.contentShift]: open,
+            [classes['contentShift-left']]: open
+          })}
+        >
+          <div className={classes.contentHeader} />
+          <Switch>
+            <Route exact path="/player" component={PlayersList} />
+            <Route exact path="/attendance/:sessionId" component={PlayersAttendaceRoute} />
+            <Route exact path="/session" component={SessionList} />
+            <Route component={FourOhFour} />
+          </Switch>
+        </main>
+      </React.Fragment>
     </BrowserRouter>
   );
 };

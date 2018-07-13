@@ -37,7 +37,7 @@ class App extends Component {
   };
 
   render() {
-    const { classes, theme } = this.props;
+    const { classes } = this.props;
     const { open } = this.state;
 
     return (
@@ -46,8 +46,9 @@ class App extends Component {
         <div className={classes.root}>
           <div className={classes.appFrame}>
             <Header open={open} handleDrawerOpen={this.handleDrawerOpen} />
-            <DrawerMenu open={open} handleDrawerClose={this.handleDrawerClose}/>
-            <Router open={open} />
+            <Router open={open}>
+              <DrawerMenu open={open} handleDrawerClose={this.handleDrawerClose}/>
+            </Router>
           </div>
         </div>
       </React.Fragment>

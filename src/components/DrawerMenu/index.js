@@ -7,7 +7,10 @@ import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import { mailFolderListItems, otherMailFolderListItems } from './tileData';
+import FitnessCenterIcon from '@material-ui/icons/FitnessCenter'
+import DirectionsRunIcon from '@material-ui/icons/DirectionsRun'
+
+import ListItemLink from './ListItemLink';
 
 const drawerWidth = 240;
 
@@ -22,6 +25,9 @@ const styles = theme => ({
     justifyContent: 'flex-end',
     padding: '0 8px',
     ...theme.mixins.toolbar
+  },
+  lists: {
+    backgroundColor: theme.palette.background.paper,
   }
 });
 
@@ -47,9 +53,13 @@ const DrawerMenu = props => {
         </IconButton>
       </div>
       <Divider />
-      <List>{mailFolderListItems}</List>
+      <div className={classes.lists}>
+        <List>
+          <ListItemLink to="/session" primary="Estimulos" icon={<FitnessCenterIcon />} />
+          <ListItemLink to="/player" primary="Jugadores" icon={<DirectionsRunIcon />} />
+        </List>
+      </div>
       <Divider />
-      <List>{otherMailFolderListItems}</List>
     </Drawer>
   );
 };

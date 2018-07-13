@@ -8,6 +8,8 @@
     "apollo-boost": "^0.1.10",
     "graphql": "^0.13.2",
     "graphql-tag": "^2.9.2",
+    "material-ui-pickers": "^1.0.0-rc.11",
+    "moment": "^2.22.2",
     "react": "^16.4.0",
     "react-apollo": "^2.1.7",
     "react-dom": "^16.4.0",
